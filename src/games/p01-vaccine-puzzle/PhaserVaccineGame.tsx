@@ -12,8 +12,9 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
 
     const canvas = document.createElement('canvas');
     const isMobile = window.innerWidth < 768;
-    canvas.width = isMobile ? 320 : 800;
-    canvas.height = isMobile ? 568 : 600;
+    // PC画面もスマホサイズに統一してゲーム難易度を同じにする
+    canvas.width = 320;
+    canvas.height = 568;
     canvas.style.border = '2px solid #333';
     canvas.style.borderRadius = '8px';
     canvas.style.touchAction = 'none';
@@ -333,13 +334,19 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       
       // リスク選択の判定
       if (showRiskChoice) {
-        const buttonWidth = isMobile ? 120 : 180;
-        const buttonHeight = isMobile ? 40 : 60;
-        const buttonY = isMobile ? 220 : 280;
-        const spacing = isMobile ? 20 : 40;
+        const buttonWidth = 120;
+        const buttonHeight = 50;
+        const buttonY = 220;
+        const spacing = 20;
         
         const retreatX = canvas.width / 2 - buttonWidth - spacing / 2;
         const continueX = canvas.width / 2 + spacing / 2;
+        
+        console.log('リスク選択座標:', { 
+          x, y, 
+          retreatArea: { x: retreatX, y: buttonY, w: buttonWidth, h: buttonHeight },
+          continueArea: { x: continueX, y: buttonY, w: buttonWidth, h: buttonHeight }
+        });
         
         // 撤退ボタンクリック
         if (x >= retreatX && x <= retreatX + buttonWidth && 
@@ -383,9 +390,15 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       }
     }
 
-    // カード選択専用のタッチイベント（優先処理）
+    // カード選択・リスク選択専用のタッチイベント（優先処理）
+    canvas.addEventListener('touchstart', (e) => {
+      if (showCardSelection || showRiskChoice) {
+        e.preventDefault(); // デフォルトのタッチ動作を防ぐ
+      }
+    });
+    
     canvas.addEventListener('touchend', (e) => {
-      if (showCardSelection) {
+      if (showCardSelection || showRiskChoice) {
         handleCardSelection(e);
       } else {
         handleTouchEnd(e);
@@ -804,33 +817,33 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
         
         // タイトル
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${isMobile ? 24 : 36}px Arial`;
+        ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('🎯 運命の選択', canvas.width / 2, isMobile ? 100 : 120);
+        ctx.fillText('🎯 運命の選択', canvas.width / 2, 80);
         
         // 現在の状況
-        ctx.font = `${isMobile ? 14 : 20}px Arial`;
+        ctx.font = '14px Arial';
         ctx.fillStyle = '#ffff00';
-        ctx.fillText(`現在のスコア: ${score}`, canvas.width / 2, isMobile ? 130 : 160);
+        ctx.fillText(`現在のスコア: ${score}`, canvas.width / 2, 110);
         
         // Wave進行状況
         ctx.fillStyle = '#00ff00';
-        ctx.fillText(`Wave ${currentWave}/10 クリア`, canvas.width / 2, isMobile ? 150 : 190);
+        ctx.fillText(`Wave ${currentWave}/10 クリア`, canvas.width / 2, 130);
         
         if (currentWave < 10) {
           const nextMultiplier = 1.0 + (currentWave * 0.5);
           ctx.fillStyle = '#ffff00';
-          ctx.fillText(`次ウェーブ倍率: x${nextMultiplier.toFixed(1)}`, canvas.width / 2, isMobile ? 170 : 220);
+          ctx.fillText(`次ウェーブ倍率: x${nextMultiplier.toFixed(1)}`, canvas.width / 2, 150);
         } else {
           ctx.fillStyle = '#ffd700';
-          ctx.fillText('🏆 最終ウェーブクリア！', canvas.width / 2, isMobile ? 170 : 220);
+          ctx.fillText('🏆 最終ウェーブクリア！', canvas.width / 2, 150);
         }
         
-        // 選択肢ボタン
-        const buttonWidth = isMobile ? 120 : 180;
-        const buttonHeight = isMobile ? 40 : 60;
-        const buttonY = isMobile ? 240 : 300;
-        const spacing = isMobile ? 20 : 40;
+        // 選択肢ボタン（canvas統一サイズに合わせて調整）
+        const buttonWidth = 120;
+        const buttonHeight = 50;
+        const buttonY = 220;
+        const spacing = 20;
         
         // 撤退ボタン
         const retreatX = canvas.width / 2 - buttonWidth - spacing / 2;
@@ -841,9 +854,9 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
         ctx.strokeRect(retreatX, buttonY, buttonWidth, buttonHeight);
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${isMobile ? 12 : 16}px Arial`;
+        ctx.font = 'bold 14px Arial';
         ctx.fillText('🛡️ 撤退', retreatX + buttonWidth/2, buttonY + buttonHeight/2 + 5);
-        ctx.font = `${isMobile ? 8 : 12}px Arial`;
+        ctx.font = '10px Arial';
         ctx.fillText('スコア確定', retreatX + buttonWidth/2, buttonY + buttonHeight/2 + 20);
         
         // 続行ボタン
@@ -855,15 +868,15 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
         ctx.strokeRect(continueX, buttonY, buttonWidth, buttonHeight);
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${isMobile ? 12 : 16}px Arial`;
+        ctx.font = 'bold 14px Arial';
         ctx.fillText('⚔️ 続行', continueX + buttonWidth/2, buttonY + buttonHeight/2 + 5);
-        ctx.font = `${isMobile ? 8 : 12}px Arial`;
+        ctx.font = '10px Arial';
         ctx.fillText('報酬倍増！', continueX + buttonWidth/2, buttonY + buttonHeight/2 + 20);
         
         // 警告文
         ctx.fillStyle = '#ff6666';
-        ctx.font = `${isMobile ? 10 : 14}px Arial`;
-        ctx.fillText('⚠️ 続行して失敗すると大幅減点！', canvas.width / 2, canvas.height - (isMobile ? 40 : 60));
+        ctx.font = '12px Arial';
+        ctx.fillText('⚠️ 続行して失敗すると大幅減点！', canvas.width / 2, canvas.height - 40);
       }
 
       // 操作説明（カード選択中でない場合のみ）
