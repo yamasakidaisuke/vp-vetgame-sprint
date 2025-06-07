@@ -4,7 +4,7 @@
 
 ## 🌐 ライブデモ
 
-**🎮 [今すぐプレイ！](https://[username].github.io/vp-vetgame-sprint/)**
+**🎮 [今すぐプレイ！](https://yamasakidaisuke.github.io/vp-vetgame-sprint/)**
 
 ※ スマートフォン・タブレット・PC すべて対応
 
