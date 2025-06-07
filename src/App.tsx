@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PhaserVaccineGame } from './games/p01-vaccine-puzzle/PhaserVaccineGame';
 
 /**

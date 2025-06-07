@@ -39,7 +39,7 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
     let enemiesPerWave = 5; // Wave1は5匹で簡単に
     let showRiskChoice = false;
     let scoreMultiplier = 1.0;
-    let baseScore = 0; // 撤退時の確定スコア
+    // let baseScore = 0; // 撤退時の確定スコア (現在未使用)
 
     // アビリティシステム
     const playerAbilities = {
@@ -550,9 +550,7 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       bullets = bullets.filter(bullet => {
         // 弾丸の移動（角度に基づく全方向）
         bullet.x += Math.cos(bullet.angle) * bullet.speed;
-        bullet.y += Math.sin(bullet.angle) * bullet.speed;
-        
-        let bulletHit = false;
+                bullet.y += Math.sin(bullet.angle) * bullet.speed;
         
         // 敵との衝突チェック
         for (let i = enemies.length - 1; i >= 0; i--) {
@@ -589,7 +587,6 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
               }
             }
             
-            bulletHit = true;
             if (!bullet.piercing) {
               return false; // 貫通弾でない場合は弾丸削除
             }
