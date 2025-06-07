@@ -1,0 +1,135 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# ─────────────────────────
+# VetGameSprint - Cursor Rules 俯瞰
+# ─────────────────────────
+
+## 🎯 プロジェクト概要
+**VetGameSprint**は獣医師向け転職サイトの話題性を高める"短時間 × 中毒性"ブラウザゲーム集です。  
+**10本の超ミニマルゲーム**を同一技術スタックで高速開発・高速改善し、Cursor＋GPT-o3の"バイブコーディング"で開発サイクルを可視化・自動化します。
+
+## 📊 成功指標（KPI）
+- **平均プレイ時間** ≤ 90秒 & **リトライ率** ≥ 60%
+- **LP遷移率** ≥ 15%（ゲーム→転職サイトボタン経由）  
+- **プロトタイプ初版** を1週間以内に10本すべて提出
+
+## 🛠️ 技術スタック
+- **Runtime**: SPA (Vite + React 18 + TypeScript)
+- **Game Engine**: Phaser 3（全ゲーム共通）
+- **UI**: Tailwind CSS + Framer Motion
+- **State**: Zustand または React Context
+- **Testing**: Vitest + React-Testing-Library
+
+## 📋 4つのルールカテゴリ
+
+### 1️⃣ [CodeStyle](mdc:codestyle.mdc) - 基盤ルール
+**適用範囲**: 全ファイル（Always適用）  
+**目的**: monorepo全体の品質基準統一
+
+- ✅ TypeScript strict + any禁止
+- ✅ JSDoc/TSDoc必須（GPT-o3連携強化）
+- ✅ import順序統一（React→Phaser→packages→相対）
+- ✅ Tailwind + Framer Motion統一
+- ✅ Vitest命名（*.spec.ts[x]）
+- ✅ Conventional Commits（trunk-based flow）
+
+### 2️⃣ [PhaserGameTemplate](mdc:phaser-game-template.mdc) - ゲーム実装ルール
+**適用範囲**: `games/p??-*/**/*.{ts,tsx}`（自動適用）  
+**目的**: 10ゲーム共通実装パターンの標準化
+
+- 🎮 Phaser 3 + React コンテナ構成
+- 🎮 /packages/game-core 共通ロジック活用
+- 🎮 Zustand状態管理（useGameStore）
+- 🎮 Plausible Analytics（play, retry, click_lp）
+- 🎮 90秒以内完了 & 60%リトライ設計
+
+### 3️⃣ [ScaffoldGenerator](mdc:scaffold-generator.mdc) - 自動化ツール
+**適用範囲**: 手動実行（`@scaffold game {id} {title}`）  
+**目的**: 10ゲーム高速スキャフォルド
+
+- 🚀 /games/p{id}-{title}/ 構造自動生成
+- 🚀 Phaser + React テンプレート適用
+- 🚀 GitHub Actions CI/CD設定
+- 🚀 Vercel Preview URL生成
+
+### 4️⃣ [KPIChecklist](mdc:kpi-checklist.mdc) - 品質監視ルール
+**適用範囲**: エージェント要求時（「KPIチェックして」）  
+**目的**: 週次レビュー用指標監視
+
+- 📊 平均プレイ時間 ≤ 90s
+- 📊 リトライ率 ≥ 60%
+- 📊 LP遷移率 ≥ 15%
+- 📊 Plausible/GA4データ自動取得
+
+## 🎮 10ゲーム構成
+
+| ID | タイトル | ジャンル | コアループ |
+|----|----------|----------|------------|
+| p01 | パピークリック | Cookie Clicker | 1タップ子犬収集→スキル発動 |
+| p02 | ワクチンパズル | Match-3 | 同色バイアル3マッチ→治療完了 |
+| p03 | 手術リズムタップ | リズムゲーム | BPM縫合タップ→心拍管理 |
+| p04 | キャットランナー | Endless Runner | 障害物ジャンプ→保護猫救出 |
+| p05 | レントゲンソーティング | Sorting/Reflex | X線左右スワイプ→診断 |
+| p06 | 抗菌カードバトル | TCG | 3枚選択→属性相性バトル |
+| p07 | エマージェンシートリアージ | Time-based | 重症度色分けドラッグ |
+| p08 | フードチェーンスマッシュ | Physics Breakout | 餌ボール→ブロック破壊 |
+| p09 | ミクロパズルラボ | Pipe Puzzle | 薬液通路接続→培養成功 |
+| p10 | ドッグトレーナーQTE | QTE Reaction | 指示カード順キー入力 |
+
+## 📁 monorepo構造認識
+
+```
+vp-vetgame-sprint/
+├── apps/
+│   └── web/                    # React SPA (ゲームコンテナ)
+├── packages/
+│   ├── game-core/             # Phaser共通ロジック
+│   ├── ui/                    # 共有UIコンポーネント
+│   └── utils/                 # 汎用関数
+├── games/                     # 各ゲーム実装
+│   ├── p01-puppy-click/
+│   ├── p02-vaccine-puzzle/
+│   ├── p03-surgery-rhythm/
+│   └── ... (p10まで)
+├── scripts/                   # 自動スキャフォルド
+├── .github/workflows/         # CI/CD
+└── docs/                      # 仕様・KPI・API定義
+```
+
+## 🔄 開発フロー（1週間スプリント）
+
+```
+Phase 1: Ideation & Spec (GPT-o3 + ダイスケ)
+└── ゲーム仕様.md、アセット一覧
+
+Phase 2: Prototype Build (Cursor + ダイスケ)
+├── CodeStyle自動適用
+├── PhaserGameTemplate自動適用  
+└── MVP実装 → Vercel Preview
+
+Phase 3: Review & Metrics (Stakeholders)
+└── KPIChecklist実行 → 改善リクエスト
+
+Phase 4: Iterate & Polish (GPT-o3 + Cursor + ダイスケ)
+└── v2リリース → β版
+```
+
+## 🔧 AI行動指針
+
+### Cursor + GPT-o3 バイブコーディング
+1. **monorepo共通パッケージ活用**を最優先
+2. **90秒以内完了設計**を常に意識
+3. **Phaser 3 + React統合**パターンを維持
+4. **Plausible Analytics**必須埋め込み
+
+### マーケティング統合
+- **LP遷移ボタン**: "転職サイトでキャリアを診断 ▶"
+- **UTMパラメータ**: `utm_source=game&utm_medium=web&utm_campaign=vetgame`
+- **報酬ループ**: 3回リトライ後→転職ヒントPDF贈呈
+
+---
+
+**重要**: 1週間で10ゲーム完成を目指し、最小コアメカニクス優先→UI簡素化→後日polishの順で開発してください。

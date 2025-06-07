@@ -1,0 +1,280 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 3️⃣ ScaffoldGenerator ルール
+
+## 使用方法
+**実行タイプ**: 手動実行  
+コマンド: `@scaffold game {id} {title}`  
+**目的**: VetGameSprint 10ゲーム高速スキャフォルド - 1週間で10本完成を支援
+
+## 入力パラメータ
+- **id**: 2桁ゲーム番号 (例: 01, 02, 03... 10)
+- **title**: スラッグ名 (例: puppy-click, vaccine-puzzle)
+
+## 🎮 10ゲーム対応マッピング
+
+| ID | タイトル | スラッグ | ジャンル |
+|----|----------|----------|----------|
+| 01 | パピークリック | puppy-click | Cookie Clicker |
+| 02 | ワクチンパズル | vaccine-puzzle | Match-3 |
+| 03 | 手術リズムタップ | surgery-rhythm | リズムゲーム |
+| 04 | キャットランナー | cat-runner | Endless Runner |
+| 05 | レントゲンソーティング | xray-sorting | Sorting/Reflex |
+| 06 | 抗菌カードバトル | antibiotics-card | TCG |
+| 07 | エマージェンシートリアージ | emergency-triage | Time-based |
+| 08 | フードチェーンスマッシュ | foodchain-smash | Physics Breakout |
+| 09 | ミクロパズルラボ | micro-puzzle | Pipe Puzzle |
+| 10 | ドッグトレーナーQTE | dog-trainer-qte | QTE Reaction |
+
+## 🚀 生成手順
+
+### 1. monorepo構造対応ディレクトリ作成
+```bash
+# 生成されるディレクトリ構造
+games/p{id}-{title}/
+├── index.tsx              # React エントリーポイント
+├── GameScene.ts           # Phaser 3 メインシーン
+├── types.ts              # ゲーム固有型定義
+├── components/           # ゲーム専用UIコンポーネント
+│   ├── GameUI.tsx
+│   ├── ScoreDisplay.tsx
+│   └── GameOverModal.tsx
+├── assets/              # ゲーム用アセット
+│   ├── images/
+│   ├── sounds/
+│   └── config.json
+├── hooks/               # ゲーム固有hooks
+│   └── useGameLogic.ts
+├── README.md            # ゲーム仕様書
+└── package.json         # 依存関係（必要に応じて）
+```
+
+### 2. Phaser 3 + React テンプレート適用
+
+#### index.tsx テンプレート
+```typescript
+// games/p{id}-{title}/index.tsx
+import React, { useEffect, useRef } from 'react';
+import Phaser from 'phaser';
+import { GameScene } from './GameScene';
+import { useGameStore } from '@/packages/game-core';
+import { GameUI } from './components/GameUI';
+
+export const {TitleCase}Game: React.FC = () => {
+  const gameRef = useRef<Phaser.Game | null>(null);
+  const { initGame } = useGameStore();
+
+  useEffect(() => {
+    const config: Phaser.Types.Core.GameConfig = {
+      type: Phaser.AUTO,
+      width: 800,
+      height: 600,
+      parent: 'phaser-game-{id}',
+      scene: GameScene,
+      physics: {
+        default: 'arcade',
+        arcade: { gravity: { y: 300 }, debug: false }
+      }
+    };
+    
+    gameRef.current = new Phaser.Game(config);
+    initGame('p{id}-{title}');
+    
+    return () => gameRef.current?.destroy(true);
+  }, []);
+
+  return (
+    <div className="w-full max-w-4xl mx-auto p-4">
+      <GameUI gameId="p{id}-{title}" />
+      <div id="phaser-game-{id}" className="mx-auto rounded-lg overflow-hidden shadow-lg" />
+    </div>
+  );
+};
+```
+
+#### GameScene.ts テンプレート
+```typescript
+// games/p{id}-{title}/GameScene.ts
+import Phaser from 'phaser';
+import { analytics } from '@/packages/utils';
+
+export class GameScene extends Phaser.Scene {
+  private startTime!: number;
+  private gameId = 'p{id}-{title}';
+  private retryCount = 0;
+
+  constructor() {
+    super({ key: 'GameScene' });
+  }
+
+  init() {
+    this.startTime = Date.now();
+    analytics.track('play', {
+      gameId: this.gameId,
+      timestamp: this.startTime
+    });
+  }
+
+  preload() {
+    // ゲーム固有アセット読み込み
+    this.load.image('placeholder', '/assets/games/p{id}/placeholder.png');
+  }
+
+  create() {
+    // 90秒制限タイマー
+    this.time.addEvent({
+      delay: 90000,
+      callback: this.endGame,
+      callbackScope: this
+    });
+
+    this.setupGameplay();
+  }
+
+  update() {
+    // フレーム更新処理
+  }
+
+  private setupGameplay() {
+    // {ジャンル}ゲーム固有のロジック実装
+    // TODO: 実装してください
+  }
+
+  private endGame() {
+    const playTime = Date.now() - this.startTime;
+    analytics.track('game_end', {
+      gameId: this.gameId,
+      playTime,
+      retryCount: this.retryCount
+    });
+
+    // React UIに通知
+    window.dispatchEvent(new CustomEvent('gameEnd', {
+      detail: { gameId: this.gameId, playTime }
+    }));
+  }
+}
+```
+
+### 3. GitHub Actions CI/CD 設定追加
+
+#### .github/workflows/preview-p{id}.yml
+```yaml
+name: Preview p{id}-{title}
+
+on:
+  push:
+    paths:
+      - 'games/p{id}-{title}/**'
+  pull_request:
+    paths:
+      - 'games/p{id}-{title}/**'
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test -- games/p{id}-{title}
+      
+      - name: Deploy to Vercel Preview
+        uses: vercel/action@v1
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-args: '--prod --scope games/p{id}-{title}'
+```
+
+### 4. 必須ファイル内容生成
+
+#### README.md
+```markdown
+# p{id}-{title} - {ゲーム名}
+
+## 概要
+- **ジャンル**: {ジャンル}
+- **プレイ時間**: 90秒以内
+- **目標リトライ率**: 60%以上
+
+## ゲームルール
+TODO: ゲームルールを記載
+
+## 開発状況
+- [ ] 基本ゲームループ実装
+- [ ] UI/UX実装  
+- [ ] LP遷移ボタン設置
+- [ ] Analytics埋め込み
+- [ ] 90秒制限実装
+- [ ] リトライ機能実装
+
+## プレビューURL
+- 開発: http://localhost:3000/games/p{id}
+- ステージング: https://vetgame-p{id}-{title}.vercel.app
+```
+
+## 🎯 使用例
+
+### 基本実行
+```bash
+# コマンドパレットで実行
+@scaffold game 01 puppy-click
+
+# 結果:
+# ✅ games/p01-puppy-click/ ディレクトリ作成
+# ✅ Phaser 3 + React テンプレート適用
+# ✅ CI/CD ワークフロー追加
+# ✅ Vercel Preview設定完了
+```
+
+### 全10ゲーム一括生成
+```bash
+@scaffold game 01 puppy-click
+@scaffold game 02 vaccine-puzzle
+@scaffold game 03 surgery-rhythm
+@scaffold game 04 cat-runner
+@scaffold game 05 xray-sorting
+@scaffold game 06 antibiotics-card
+@scaffold game 07 emergency-triage
+@scaffold game 08 foodchain-smash
+@scaffold game 09 micro-puzzle
+@scaffold game 10 dog-trainer-qte
+```
+
+## 📦 依存関係とパッケージ統合
+
+### 共通パッケージ自動インポート設定
+```typescript
+// 各ゲームで自動的にインポートされる
+import { useGameStore } from '@/packages/game-core';
+import { 
+  GameOverOverlay,
+  RetryButton, 
+  LPTransitionButton,
+  TimerWidget 
+} from '@/packages/ui';
+import { analytics } from '@/packages/utils';
+```
+
+### KPI追跡自動設定
+- Plausible Analytics埋め込み
+- 必須イベント（play, retry, click_lp）追加
+- 90秒制限タイマー自動実装
+
+---
+
+**生成後の次ステップ**: 
+1. 基本ゲームループ実装
+2. UI/UX調整
+3. LP遷移ボタン設置確認
+4. プレビューURL動作確認
+
+
+

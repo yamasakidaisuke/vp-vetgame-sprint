@@ -1,0 +1,61 @@
+---
+description: 
+globs: games/**/*.ts,games/**/*.tsx
+alwaysApply: false
+---
+# 2️⃣ PhaserGameTemplate ルール
+
+## 適用範囲
+**ファイルパターン**: `games/p??-*/*.{ts,tsx}`  
+個々のゲーム実装ファイルに自動で適用。  
+共通ロジックを強制し、学習コストを抑えたテンプレートを維持。
+
+## ルール
+
+### ゲーム構造
+- **各ゲームは `initScene → preload → create → update` の4段関数構成**
+```typescript
+export class GameScene extends Phaser.Scene {
+  initScene() { /* 初期化 */ }
+  preload() { /* アセット読み込み */ }
+  create() { /* ゲームオブジェクト作成 */ }
+  update() { /* フレーム更新 */ }
+}
+```
+
+### UI コンポーネント
+- **共通 UI は @/packages/ui からインポート。直接 Tailwind を書かない**
+- ゲーム内UIはパッケージ化されたコンポーネントを使用
+- カスタムスタイルが必要な場合は ui パッケージを拡張
+
+### 状態管理
+- **状態は `useGameStore()` (Zustand) を介して読み書き**
+```typescript
+import { useGameStore } from '@/packages/store';
+
+const { score, updateScore, resetGame } = useGameStore();
+```
+
+### アナリティクス
+- **ゲーム開始時に `analytics.track('play', {...})` を必ず呼ぶ**
+```typescript
+analytics.track('play', {
+  gameId: 'p03-vaccine-puzzle',
+  timestamp: Date.now(),
+  userAgent: navigator.userAgent
+});
+```
+
+### ゲームオーバー処理
+- **失敗条件 & リトライボタンは `GameOverOverlay` コンポーネントを使用**
+```typescript
+import { GameOverOverlay } from '@/packages/ui';
+
+// ゲーム失敗時
+<GameOverOverlay
+  onRetry={() => resetGame()}
+  onExit={() => router.push('/')}
+  score={currentScore}
+/>
+```
+
