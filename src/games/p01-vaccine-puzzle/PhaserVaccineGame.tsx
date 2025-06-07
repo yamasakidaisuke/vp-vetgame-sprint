@@ -26,6 +26,7 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
     
     // ゲーム状態
     let gameRunning = true;
+    let gameState: 'playing' | 'gameOver' | 'victory' = 'playing';
     let score = 0;
     let hp = 100;
     let level = 1;
@@ -318,8 +319,15 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
     });
     // touchendは下の方でカード選択と統合処理
 
-    // カード選択・リスク選択のクリックイベント（タッチも対応）
+    // カード選択・リスク選択・ゲーム終了画面のクリックイベント（タッチも対応）
     function handleCardSelection(e: MouseEvent | TouchEvent) {
+      // ゲーム終了画面でのクリック処理
+      if (gameState === 'gameOver' || gameState === 'victory') {
+        e.preventDefault();
+        restartGame();
+        return;
+      }
+      
       if (!showCardSelection && !showRiskChoice) return;
       
       e.preventDefault();
@@ -390,15 +398,15 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       }
     }
 
-    // カード選択・リスク選択専用のタッチイベント（優先処理）
+    // カード選択・リスク選択・ゲーム終了画面専用のタッチイベント（優先処理）
     canvas.addEventListener('touchstart', (e) => {
-      if (showCardSelection || showRiskChoice) {
+      if (showCardSelection || showRiskChoice || gameState === 'gameOver' || gameState === 'victory') {
         e.preventDefault(); // デフォルトのタッチ動作を防ぐ
       }
     });
     
     canvas.addEventListener('touchend', (e) => {
-      if (showCardSelection || showRiskChoice) {
+      if (showCardSelection || showRiskChoice || gameState === 'gameOver' || gameState === 'victory') {
         handleCardSelection(e);
       } else {
         handleTouchEnd(e);
@@ -406,6 +414,48 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
     });
     
     canvas.addEventListener('click', handleCardSelection);
+
+    // ゲームリスタート
+    function restartGame() {
+      // 全ての状態を初期化
+      gameRunning = true;
+      gameState = 'playing';
+      score = 0;
+      hp = 100;
+      level = 1;
+      enemiesKilled = 0;
+      showCardSelection = false;
+      selectedCards = [];
+      currentWave = 1;
+      enemiesInWave = 0;
+      enemiesSpawned = 0;
+      enemiesPerWave = 5;
+      showRiskChoice = false;
+      scoreMultiplier = 1.0;
+      
+      // ゲーム要素をクリア
+      enemies.length = 0;
+      bullets.length = 0;
+      effects.length = 0;
+      
+      // プレイヤー位置をリセット
+      player.x = canvas.width / 2;
+      player.y = canvas.height / 2;
+      
+      // アビリティをリセット
+      playerAbilities.fireRate = 1.2;
+      playerAbilities.piercing = false;
+      playerAbilities.multiShot = 1;
+      playerAbilities.explosiveShot = false;
+      playerAbilities.bulletSpeed = 1;
+      playerAbilities.damage = 8;
+      
+      // タイマーリセット
+      bulletTimer = 0;
+      enemyTimer = 0;
+      
+      console.log('ゲームリスタート完了');
+    }
 
     // エフェクト表示
     function showEffect(x: number, y: number, text: string, color: string) {
@@ -879,6 +929,52 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
         ctx.fillText('⚠️ 続行して失敗すると大幅減点！', canvas.width / 2, canvas.height - 40);
       }
 
+      // ゲーム勝利画面
+      if (gameState === 'victory') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 勝利画面
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 28px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏆 VICTORY! 🏆', canvas.width / 2, canvas.height / 2 - 80);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('全10ウェーブクリア！', canvas.width / 2, canvas.height / 2 - 40);
+        
+        ctx.font = '16px Arial';
+        ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
+        ctx.fillText(`Enemies Killed: ${enemiesKilled}`, canvas.width / 2, canvas.height / 2 + 30);
+        
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '14px Arial';
+        ctx.fillText('あなたは真のメディカルヒーロー！', canvas.width / 2, canvas.height / 2 + 60);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.fillText('🔄 タップ/クリックでリスタート', canvas.width / 2, canvas.height / 2 + 90);
+      }
+
+      // ゲームオーバー画面
+      if (gameState === 'gameOver') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('💀 Game Over', canvas.width / 2, canvas.height / 2 - 50);
+        
+        ctx.font = '16px Arial';
+        ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
+        ctx.fillText(`Enemies Killed: ${enemiesKilled}`, canvas.width / 2, canvas.height / 2 + 30);
+        
+        ctx.font = '12px Arial';
+        ctx.fillText('🔄 タップ/クリックでリスタート', canvas.width / 2, canvas.height / 2 + 70);
+      }
+
       // 操作説明（カード選択中でない場合のみ）
       if (!showCardSelection) {
         if (isMobile) {
@@ -898,55 +994,13 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
     // ゲーム勝利
     function gameVictory() {
       gameRunning = false;
-      
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // 勝利画面
-      ctx.fillStyle = '#ffd700';
-      ctx.font = `bold ${isMobile ? 28 : 42}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.fillText('🏆 VICTORY! 🏆', canvas.width / 2, canvas.height / 2 - 80);
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${isMobile ? 18 : 28}px Arial`;
-      ctx.fillText('全10ウェーブクリア！', canvas.width / 2, canvas.height / 2 - 40);
-      
-      ctx.font = `${isMobile ? 16 : 24}px Arial`;
-      ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
-      ctx.fillText(`Enemies Killed: ${enemiesKilled}`, canvas.width / 2, canvas.height / 2 + 30);
-      
-      ctx.fillStyle = '#ffd700';
-      ctx.font = `${isMobile ? 14 : 18}px Arial`;
-      ctx.fillText('あなたは真のメディカルヒーロー！', canvas.width / 2, canvas.height / 2 + 60);
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `${isMobile ? 12 : 16}px Arial`;
-      ctx.fillText('Click to Restart', canvas.width / 2, canvas.height / 2 + 90);
-      
-      canvas.addEventListener('click', () => location.reload());
+      gameState = 'victory';
     }
 
     // ゲームオーバー
     function gameOver() {
       gameRunning = false;
-      
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${isMobile ? 24 : 36}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 50);
-      
-      ctx.font = `${isMobile ? 16 : 24}px Arial`;
-      ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
-      ctx.fillText(`Enemies Killed: ${enemiesKilled}`, canvas.width / 2, canvas.height / 2 + 30);
-      
-      ctx.font = `${isMobile ? 12 : 16}px Arial`;
-      ctx.fillText('Click to Restart', canvas.width / 2, canvas.height / 2 + 70);
-      
-      canvas.addEventListener('click', () => location.reload());
+      gameState = 'gameOver';
     }
 
     // ゲームループ
