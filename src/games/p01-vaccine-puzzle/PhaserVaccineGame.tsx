@@ -1055,10 +1055,16 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       updateEnemies();
       updateEffects();
 
-      // レベルアップ（3ウェーブごと）
-      const newLevel = Math.floor(currentWave / 3) + 1;
+      // レベルアップ（敵を倒した数ベース：5匹倒すごと）
+      const newLevel = Math.floor(enemiesKilled / 5) + 1;
       if (newLevel > level) {
+        console.log(`レベルアップ！現在レベル: ${level} → 新レベル: ${newLevel}, 敵撃破数: ${enemiesKilled}`);
         levelUp();
+      }
+      
+      // デバッグ情報：ゲーム状態の監視
+      if (currentTime % 5000 < 16) { // 約5秒ごとに表示
+        console.log(`[ゲーム状態] Wave: ${currentWave}, Score: ${score}, 敵数: ${enemies.length}, スポーン済み: ${enemiesSpawned}/${enemiesPerWave}, レベル: ${level}, gameRunning: ${gameRunning}`);
       }
 
       // ゲームオーバーチェック
