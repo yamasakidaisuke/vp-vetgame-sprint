@@ -5,6 +5,7 @@ import { resolve } from 'path';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: process.env.NODE_ENV === 'production' ? '/vp-vetgame-sprint/' : '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
