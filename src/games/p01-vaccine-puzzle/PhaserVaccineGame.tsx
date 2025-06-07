@@ -62,6 +62,18 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       emoji: '🏥'
     };
 
+    // コア臓器システム（v2.0新機能）
+    const coreOrgan = {
+      x: canvas.width / 2,
+      y: canvas.height / 2 + 60, // プレイヤーの少し下に配置
+      size: 40,
+      hp: 500,
+      maxHp: 500,
+      emoji: '❤️', // ステージ1: 心臓
+      defenseMultiplier: 1.0, // 被ダメージ軽減（細胞壁強化アビリティ用）
+      lastRegenTime: 0 // 再生促進アビリティ用
+    };
+
     // 弾丸システム
     let bullets: Array<{
       x: number;
@@ -442,6 +454,13 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       player.x = canvas.width / 2;
       player.y = canvas.height / 2;
       
+      // コア臓器をリセット（v2.0新機能）
+      coreOrgan.x = canvas.width / 2;
+      coreOrgan.y = canvas.height / 2 + 60;
+      coreOrgan.hp = coreOrgan.maxHp;
+      coreOrgan.defenseMultiplier = 1.0;
+      coreOrgan.lastRegenTime = 0;
+      
       // アビリティをリセット
       playerAbilities.fireRate = 1.2;
       playerAbilities.piercing = false;
@@ -684,6 +703,20 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
           showEffect(player.x, player.y, `-${damage} HP`, '#ff0000');
           return false; // 敵削除
         }
+
+        // コア臓器との衝突チェック（v2.0新機能）
+        if (checkCollision(enemy, coreOrgan)) {
+          const organDamage = Math.floor((12 + Math.floor(currentWave * 2)) * coreOrgan.defenseMultiplier);
+          coreOrgan.hp -= organDamage;
+          showEffect(coreOrgan.x, coreOrgan.y, `-${organDamage} HP`, '#ff4444');
+          
+          // 臓器HPが0以下になったらゲームオーバー
+          if (coreOrgan.hp <= 0) {
+            coreOrgan.hp = 0;
+            gameOver();
+          }
+          return false; // 敵削除
+        }
         
         // 画面外に出すぎた敵は削除（スポーン失敗対策）
         return enemy.x > -100 && enemy.x < canvas.width + 100 && 
@@ -726,6 +759,43 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       if (scoreMultiplier > 1) {
         ctx.fillText(`倍率: x${scoreMultiplier.toFixed(1)}`, canvas.width / 2, isMobile ? 60 : 65);
       }
+
+      // コア臓器描画（v2.0新機能）
+      ctx.font = `${coreOrgan.size}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText(coreOrgan.emoji, coreOrgan.x, coreOrgan.y + coreOrgan.size / 2);
+      
+      // コア臓器HPバー（画面上部中央）
+      const organBarWidth = isMobile ? 120 : 180;
+      const organBarHeight = isMobile ? 8 : 12;
+      const organBarX = canvas.width / 2 - organBarWidth / 2;
+      const organBarY = isMobile ? 75 : 90;
+      const organHpRatio = coreOrgan.hp / coreOrgan.maxHp;
+      
+      // 臓器HPバー背景
+      ctx.fillStyle = '#333333';
+      ctx.fillRect(organBarX, organBarY, organBarWidth, organBarHeight);
+      
+      // 臓器HPバー（色は残りHPによって変化）
+      if (organHpRatio > 0.6) {
+        ctx.fillStyle = '#ff69b4'; // ピンク（健康）
+      } else if (organHpRatio > 0.3) {
+        ctx.fillStyle = '#ffa500'; // オレンジ（注意）
+      } else {
+        ctx.fillStyle = '#ff0000'; // 赤（危険）
+      }
+      ctx.fillRect(organBarX, organBarY, organBarWidth * organHpRatio, organBarHeight);
+      
+      // 臓器HPバー枠線
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(organBarX, organBarY, organBarWidth, organBarHeight);
+      
+      // 臓器HP数値
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `${isMobile ? 10 : 14}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`❤️ ${coreOrgan.hp}/${coreOrgan.maxHp}`, canvas.width / 2, organBarY + organBarHeight + (isMobile ? 15 : 20));
 
       // プレイヤー描画
       ctx.font = `${player.size * 2}px Arial`;
@@ -965,14 +1035,27 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('💀 Game Over', canvas.width / 2, canvas.height / 2 - 50);
+        ctx.fillText('💀 Game Over', canvas.width / 2, canvas.height / 2 - 80);
         
-        ctx.font = '16px Arial';
+        // ゲームオーバー理由を表示（v2.0新機能）
+        ctx.font = `${isMobile ? 12 : 16}px Arial`;
+        ctx.fillStyle = '#ff6666';
+        if (coreOrgan.hp <= 0) {
+          ctx.fillText('❤️ コア臓器が破壊されました！', canvas.width / 2, canvas.height / 2 - 50);
+          ctx.fillText('臓器を守ることができませんでした...', canvas.width / 2, canvas.height / 2 - 30);
+        } else if (hp <= 0) {
+          ctx.fillText('🏥 メディカルユニットが破壊されました！', canvas.width / 2, canvas.height / 2 - 50);
+          ctx.fillText('プレイヤーが力尽きました...', canvas.width / 2, canvas.height / 2 - 30);
+        }
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${isMobile ? 14 : 16}px Arial`;
         ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2);
-        ctx.fillText(`Enemies Killed: ${enemiesKilled}`, canvas.width / 2, canvas.height / 2 + 30);
+        ctx.fillText(`Enemies Killed: ${enemiesKilled}`, canvas.width / 2, canvas.height / 2 + 25);
+        ctx.fillText(`Wave Reached: ${currentWave}`, canvas.width / 2, canvas.height / 2 + 50);
         
-        ctx.font = '12px Arial';
-        ctx.fillText('🔄 タップ/クリックでリスタート', canvas.width / 2, canvas.height / 2 + 70);
+        ctx.font = `${isMobile ? 10 : 12}px Arial`;
+        ctx.fillText('🔄 タップ/クリックでリスタート', canvas.width / 2, canvas.height / 2 + 80);
       }
 
       // 操作説明（カード選択中でない場合のみ）
