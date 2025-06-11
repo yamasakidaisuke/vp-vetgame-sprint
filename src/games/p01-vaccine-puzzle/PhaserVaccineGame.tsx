@@ -665,6 +665,7 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
               
               // ウェーブクリアチェック（全ての敵をスポーンし、すべて撃破した場合）
               if (enemiesSpawned >= enemiesPerWave && enemies.length === 0) {
+                console.log(`Wave ${currentWave} クリア！ 敵撃破: ${enemiesInWave}/${enemiesPerWave}`);
                 waveComplete();
               }
             }
@@ -1104,12 +1105,6 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
         return;
       }
 
-      // 常に最低限の敵数を維持（緊張感保持）
-      const minEnemies = Math.min(6, 2 + currentWave);
-      if (enemies.length < minEnemies && enemiesSpawned < enemiesPerWave) {
-        spawnEnemy();
-      }
-
       // プレイヤー更新
       updatePlayer();
 
@@ -1121,13 +1116,25 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
         bulletTimer = 0;
       }
 
-      // 敵スポーン（より高頻度で大群）
+      // 敵スポーン制御（改善版）
       enemyTimer += deltaTime;
-      const spawnRate = Math.max(800, 2000 - (currentWave * 100)); // スポーン頻度を調整
-      if (enemyTimer > spawnRate && enemiesSpawned < enemiesPerWave) {
-        // 大群でスポーン（複数体同時）
-        const spawnCount = Math.min(2, 1 + Math.floor(currentWave / 3));
-        for (let i = 0; i < spawnCount && enemiesSpawned < enemiesPerWave; i++) {
+      const spawnRate = Math.max(600, 1800 - (currentWave * 80)); // スポーン頻度を調整
+      
+      // 段階的スポーン: 常に最低限の敵数を維持 + 定期的な追加スポーン
+      const minEnemies = Math.min(4, 1 + currentWave);
+      const shouldSpawnMore = enemiesSpawned < enemiesPerWave;
+      
+      if (shouldSpawnMore && (enemies.length < minEnemies || enemyTimer > spawnRate)) {
+        // スポーン数をウェーブに応じて調整
+        const spawnCount = Math.min(
+          3, // 最大3匹まで同時スポーン
+          enemiesPerWave - enemiesSpawned, // 残りスポーン数
+          Math.max(1, Math.floor(currentWave / 2) + 1) // ウェーブに応じたスポーン数
+        );
+        
+        console.log(`Wave ${currentWave}: ${spawnCount}匹スポーン実行 (現在${enemies.length}匹, ${enemiesSpawned}/${enemiesPerWave})`);
+        
+        for (let i = 0; i < spawnCount; i++) {
           spawnEnemy();
         }
         enemyTimer = 0;
@@ -1138,16 +1145,18 @@ export const PhaserVaccineGame: React.FC<PhaserVaccineGameProps> = ({ onBack }) 
       updateEnemies();
       updateEffects();
 
-      // レベルアップ（敵を倒した数ベース：5匹倒すごと）
-      const newLevel = Math.floor(enemiesKilled / 5) + 1;
+      // レベルアップ（敵を倒した数ベース：15匹倒すごと、または2ウェーブクリアごと）
+      const levelByKills = Math.floor(enemiesKilled / 15) + 1;
+      const levelByWaves = Math.floor((currentWave - 1) / 2) + 1;
+      const newLevel = Math.max(levelByKills, levelByWaves);
       if (newLevel > level) {
-        console.log(`レベルアップ！現在レベル: ${level} → 新レベル: ${newLevel}, 敵撃破数: ${enemiesKilled}`);
+        console.log(`レベルアップ！現在レベル: ${level} → 新レベル: ${newLevel}, 敵撃破数: ${enemiesKilled}, ウェーブ: ${currentWave}`);
         levelUp();
       }
       
-      // デバッグ情報：ゲーム状態の監視
-      if (currentTime % 5000 < 16) { // 約5秒ごとに表示
-        console.log(`[ゲーム状態] Wave: ${currentWave}, Score: ${score}, 敵数: ${enemies.length}, スポーン済み: ${enemiesSpawned}/${enemiesPerWave}, レベル: ${level}, gameRunning: ${gameRunning}`);
+      // デバッグ情報：ゲーム状態の監視（頻度を上げて詳細化）
+      if (currentTime % 3000 < 16) { // 約3秒ごとに表示
+        console.log(`[ゲーム状態] Wave: ${currentWave}, Score: ${score}, 画面上の敵: ${enemies.length}, スポーン済み: ${enemiesSpawned}/${enemiesPerWave}, 撃破済み: ${enemiesInWave}, レベル: ${level}, gameRunning: ${gameRunning}`);
       }
 
       // ゲームオーバーチェック

@@ -3,3 +3,82 @@ description:
 globs:
 alwaysApply: false
 ---
+# Git Terminal Setup Rule
+
+## 概要
+Git コマンド実行時にページャーが起動して処理が止まる問題を防ぐための設定ルール。  
+特に AI Assistant や CI/CD 環境での git 操作を円滑にする。
+
+## 問題
+- `git log`, `git show`, `git diff` 等でページャー（less/more）が起動
+- PowerShell や非対話環境でページャーが正常に動作しない
+- プロンプトが停止し、ユーザーがキー入力待ちになる
+
+## 必須設定
+
+### グローバル設定（推奨）
+```bash
+# ページャーを完全無効化
+git config --global core.pager ""
+
+# または、catコマンドに設定（全出力表示）
+git config --global core.pager "cat"
+```
+
+### プロジェクト固有設定
+```bash
+# プロジェクトディレクトリで実行
+git config core.pager ""
+```
+
+## Git コマンド実行時のルール
+
+### ✅ 推奨コマンド
+```bash
+# 短縮形を使用
+git log --oneline -5
+git status
+git diff --name-only
+
+# 出力制限
+git log --oneline --max-count=10
+```
+
+### ❌ 避けるコマンド
+```bash
+# ページャーが起動する可能性
+git log
+git show
+git diff（大きなファイル）
+```
+
+## トラブルシューティング
+
+### ページャーで停止した場合
+1. `q` キーを押して終了
+2. `Ctrl+C` で強制終了
+3. 新しいターミナルセッションを開始
+
+### 設定確認
+```bash
+git config --get core.pager
+# 空の場合は正常（ページャー無効）
+```
+
+## AI Assistant 向け追加ルール
+
+1. **git コマンド実行前に必ずページャー設定を確認**
+2. **長い出力が予想される場合は出力制限オプションを使用**
+3. **ページャーが起動した場合は即座に修正手順を実行**
+4. **新プロジェクトの最初のコミット前に必ず設定実行**
+
+## 自動設定スクリプト
+```bash
+# 新プロジェクト開始時に実行
+setup_git_no_pager() {
+  git config core.pager ""
+  echo "Git pager disabled for this project"
+}
+```
+
+この設定により、git 操作が中断されることなく円滑に実行できる。
