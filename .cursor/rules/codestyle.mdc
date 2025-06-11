@@ -1,0 +1,44 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 1️⃣ CodeStyle ルール
+
+## 概要
+ファイルの種類に関係なく、すべてのコードに共通するスタイルと品質基準。  
+ESLint / Prettier / TypeScript Strict / テスト方針を統一し、  
+Cursor の AI 補完がブレないようガイドラインを固定する。
+
+## ルール
+
+### TypeScript設定
+- **必ず TypeScript strictNullChecks を ON。any の禁止**
+- 型安全性を最優先し、未定義値の問題を防ぐ
+
+### ドキュメント
+- **関数・クラス・React コンポーネントには JSDoc または TSDoc を付与**
+- パラメータ、戻り値、使用例を含める
+
+### インポート順序
+- **import 順序: React → ライブラリ → alias (@/packages) → 相対**
+```typescript
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '@/packages/ui';
+import './styles.css';
+```
+
+### CSS設計
+- **Tailwind のクラスは常にモバイルファースト順**
+- レスポンシブ修飾子は sm: → md: → lg: → xl: の順
+
+### テスト設定
+- **Vitest のテストファイル名は `*.spec.ts[x]`**
+- テストファイルはテスト対象と同じディレクトリに配置
+
+### Git コミット
+- **コミットメッセージは Conventional Commits 準拠**
+- 形式: `type(scope): description`
+- 例: `feat(game/03): add vaccine puzzle game`
+

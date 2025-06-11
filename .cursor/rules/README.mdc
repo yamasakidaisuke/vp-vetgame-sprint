@@ -1,0 +1,47 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# VetGameSprint - Cursor Rules
+
+## 🎯 俯瞰的理解はこちら
+**メインルール**: [VetGameSprint Overview](mdc:vetgame-sprint-overview.mdc)
+
+## 📋 個別ルール詳細
+
+### 基盤ルール
+- **[CodeStyle](mdc:codestyle.mdc)** - TypeScript strict、JSDoc、インポート順序等
+
+### ゲーム開発ルール  
+- **[PhaserGameTemplate](mdc:phaser-game-template.mdc)** - 4段階構成、共通UI、状態管理等
+
+### 自動化ツール
+- **[ScaffoldGenerator](mdc:scaffold-generator.mdc)** - 新規ゲーム雛形生成
+- **[KPIChecklist](mdc:kpi-checklist.mdc)** - パフォーマンス指標監視
+
+## 🚀 クイックスタート
+
+### 新規ゲーム作成
+```bash
+@scaffold game 05 puzzle-adventure
+```
+
+### 品質チェック
+```bash
+"今月のKPIチェックして"
+```
+
+### 日常開発
+- **CodeStyle**が自動適用
+- **PhaserGameTemplate**がゲームファイルに自動適用
+
+---
+
+**詳細な使用方法とルール適用フローは [Overview](mdc:vetgame-sprint-overview.mdc) を参照してください。**
+
+
+
+
+
+
